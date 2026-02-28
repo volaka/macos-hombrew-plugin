@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: macos-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build release binary
+        run: swift build -c release
+
+      - name: Package .app bundle
+        run: |
+          TAG=${GITHUB_REF_NAME}
+          APP_DIR="BrewNotifier.app/Contents"
+          mkdir -p "$APP_DIR/MacOS"
+          cp .build/release/BrewNotifier "$APP_DIR/MacOS/BrewNotifier"
+          cp Sources/BrewNotifier/Info.plist "$APP_DIR/Info.plist"
+          zip -r "BrewNotifier-${TAG}.zip" BrewNotifier.app
+          echo "ASSET=BrewNotifier-${TAG}.zip" >> $GITHUB_ENV
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ASSET }}
+          generate_release_notes: true
