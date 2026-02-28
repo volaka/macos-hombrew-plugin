@@ -1,0 +1,12 @@
+.build/
+*.o
+*.d
+*.swp
+.DS_Store
+xcuserdata/
+*.xcworkspace
+DerivedData/
+docs/
+.vscode/
+.claude/
+.idea/
