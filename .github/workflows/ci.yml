@@ -22,6 +22,6 @@ jobs:
         run: swift test
 
       - name: SwiftLint
-        uses: norio-nomura/action-swiftlint@0.0.2
+        uses: norio-nomura/action-swiftlint@3.2.1
         with:
           args: --strict

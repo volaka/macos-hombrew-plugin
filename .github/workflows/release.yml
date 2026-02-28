@@ -22,16 +22,14 @@ jobs:
 
       - name: Package .app bundle
         run: |
-          TAG=${GITHUB_REF_NAME}
           APP_DIR="BrewNotifier.app/Contents"
           mkdir -p "$APP_DIR/MacOS"
           cp .build/release/BrewNotifier "$APP_DIR/MacOS/BrewNotifier"
           cp Sources/BrewNotifier/Info.plist "$APP_DIR/Info.plist"
-          zip -r "BrewNotifier-${TAG}.zip" BrewNotifier.app
-          echo "ASSET=BrewNotifier-${TAG}.zip" >> $GITHUB_ENV
+          zip -r "BrewNotifier-${GITHUB_REF_NAME}.zip" BrewNotifier.app
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.ASSET }}
+          files: BrewNotifier-${{ github.ref_name }}.zip
           generate_release_notes: true
