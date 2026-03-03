@@ -2,6 +2,12 @@
 
 A macOS menu bar app that tracks outdated Homebrew packages and lets you upgrade them without leaving the menu bar.
 
+## Screenshots
+
+| Menu bar | Main menu | Package list |
+|---|---|---|
+| ![Top bar](images/top-bar.png) | ![Main menu](images/main-menu.png) | ![Menu with submenu](images/main-menu-with-submenu.png) |
+
 ## Features
 
 - **Badge count** on the menu bar icon showing how many packages have updates

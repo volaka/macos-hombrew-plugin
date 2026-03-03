@@ -20,7 +20,7 @@ public enum BrewServiceError: Error, LocalizedError {
 public final class BrewService {
     private static let brewPaths = [
         "/opt/homebrew/bin/brew",  // Apple Silicon
-        "/usr/local/bin/brew",     // Intel
+        "/usr/local/bin/brew"     // Intel
     ]
 
     // Overrides for testing

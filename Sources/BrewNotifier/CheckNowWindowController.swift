@@ -91,7 +91,7 @@ final class CheckNowWindowController: NSWindowController {
             scrollView.bottomAnchor.constraint(equalTo: actionButton.topAnchor, constant: -8),
 
             actionButton.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            actionButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12),
+            actionButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12)
         ])
     }
 
@@ -124,7 +124,7 @@ final class CheckNowWindowController: NSWindowController {
         guard let storage = logView.textStorage else { return }
         let attrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular),
-            .foregroundColor: NSColor.labelColor,
+            .foregroundColor: NSColor.labelColor
         ]
         storage.append(NSAttributedString(string: line + "\n", attributes: attrs))
         logView.scrollToEndOfDocument(nil)

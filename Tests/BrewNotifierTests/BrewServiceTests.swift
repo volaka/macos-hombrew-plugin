@@ -17,7 +17,7 @@ final class BrewServiceTests: XCTestCase {
     }
 
     func testFetchOutdatedParsesStubbedJSON() async throws {
-        let json = """
+        let jsonString = """
         {
             "formulae": [
                 {
@@ -36,9 +36,8 @@ final class BrewServiceTests: XCTestCase {
                 }
             ]
         }
-        """.data(using: .utf8)!
-
-        let service = BrewService(stubbedOutput: json)
+        """
+        let service = BrewService(stubbedOutput: Data(jsonString.utf8))
         let result = try await service.fetchOutdated()
 
         XCTAssertEqual(result.formulae.count, 1)
@@ -48,8 +47,7 @@ final class BrewServiceTests: XCTestCase {
     }
 
     func testFetchOutdatedThrowsOnInvalidJSON() async throws {
-        let badData = "not json at all".data(using: .utf8)!
-        let service = BrewService(stubbedOutput: badData)
+        let service = BrewService(stubbedOutput: Data("not json at all".utf8))
 
         do {
             _ = try await service.fetchOutdated()
@@ -68,10 +66,7 @@ final class BrewServiceTests: XCTestCase {
     }
 
     func testFetchOutdatedWithProgressCallsHandlerWithStubbedOutput() async throws {
-        let json = """
-        {"formulae": [], "casks": []}
-        """.data(using: .utf8)!
-        let service = BrewService(stubbedOutput: json)
+        let service = BrewService(stubbedOutput: Data(#"{"formulae": [], "casks": []}"#.utf8))
         var lines: [String] = []
         let result = try await service.fetchOutdatedWithProgress { line in
             lines.append(line)

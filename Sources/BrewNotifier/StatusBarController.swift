@@ -155,54 +155,34 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             updatesItem.title = searchQuery.isEmpty
                 ? "Updates (\(totalCount))"
                 : "Results (\(displayCount) of \(totalCount))"
-
             let submenu = NSMenu()
             submenu.autoenablesItems = false
-
-            if !filteredFormulae.isEmpty {
-                let header = NSMenuItem(title: "Formulae (\(filteredFormulae.count))", action: nil, keyEquivalent: "")
-                header.isEnabled = false
-                submenu.addItem(header)
-                for pkg in filteredFormulae {
-                    let item = NSMenuItem(
-                        title: "  \(pkg.name)  \(pkg.installedVersions.first ?? "?") → \(pkg.currentVersion)",
-                        action: #selector(upgradePackage(_:)),
-                        keyEquivalent: ""
-                    )
-                    item.target = self
-                    item.isEnabled = true
-                    item.representedObject = PackageMenuInfo(
-                        name: pkg.name,
-                        installed: pkg.installedVersions.first ?? "?",
-                        current: pkg.currentVersion
-                    )
-                    submenu.addItem(item)
-                }
-            }
-
-            if !filteredCasks.isEmpty {
-                if !filteredFormulae.isEmpty { submenu.addItem(.separator()) }
-                let header = NSMenuItem(title: "Casks (\(filteredCasks.count))", action: nil, keyEquivalent: "")
-                header.isEnabled = false
-                submenu.addItem(header)
-                for cask in filteredCasks {
-                    let item = NSMenuItem(
-                        title: "  \(cask.name)  \(cask.installedVersions.first ?? "?") → \(cask.currentVersion)",
-                        action: #selector(upgradePackage(_:)),
-                        keyEquivalent: ""
-                    )
-                    item.target = self
-                    item.isEnabled = true
-                    item.representedObject = PackageMenuInfo(
-                        name: cask.name,
-                        installed: cask.installedVersions.first ?? "?",
-                        current: cask.currentVersion
-                    )
-                    submenu.addItem(item)
-                }
-            }
-
+            addPackageItems(filteredFormulae, to: submenu, header: "Formulae")
+            if !filteredCasks.isEmpty && !filteredFormulae.isEmpty { submenu.addItem(.separator()) }
+            addPackageItems(filteredCasks, to: submenu, header: "Casks")
             updatesItem.submenu = submenu
+        }
+    }
+
+    private func addPackageItems<T: BrewPackageProtocol>(_ packages: [T], to submenu: NSMenu, header: String) {
+        guard !packages.isEmpty else { return }
+        let headerItem = NSMenuItem(title: "\(header) (\(packages.count))", action: nil, keyEquivalent: "")
+        headerItem.isEnabled = false
+        submenu.addItem(headerItem)
+        for pkg in packages {
+            let item = NSMenuItem(
+                title: "  \(pkg.name)  \(pkg.installedVersions.first ?? "?") → \(pkg.currentVersion)",
+                action: #selector(upgradePackage(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.isEnabled = true
+            item.representedObject = PackageMenuInfo(
+                name: pkg.name,
+                installed: pkg.installedVersions.first ?? "?",
+                current: pkg.currentVersion
+            )
+            submenu.addItem(item)
         }
     }
 
@@ -259,7 +239,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        let wc = CheckNowWindowController(service: BrewService()) { [weak self] formulae, casks in
+        let windowController = CheckNowWindowController(service: BrewService()) { [weak self] formulae, casks in
             guard let self else { return }
             let ignored = Set(checker.settings.ignoredPackages)
             checker.updateResults(
@@ -267,13 +247,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 casks: casks.filter { !ignored.contains($0.name) }
             )
         }
-        checkNowWindowController = wc
-        wc.showWindow(nil)
+        checkNowWindowController = windowController
+        windowController.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
-        wc.startCheck()
+        windowController.startCheck()
         NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
-            object: wc.window,
+            object: windowController.window,
             queue: .main
         ) { [weak self] _ in
             self?.checkNowWindowController = nil
@@ -287,17 +267,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        let wc = UpgradeWindowController(
-            target: .single(name: info.name, from: info.installed, to: info.current),
+        let windowController = UpgradeWindowController(
+            target: .single(name: info.name, from: info.installed, newVersion: info.current),
             onComplete: { [weak self] in self?.checker.checkNow() }
         )
-        upgradeWindowControllers[info.name] = wc
-        wc.showWindow(nil)
+        upgradeWindowControllers[info.name] = windowController
+        windowController.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
-        wc.startUpgrade()
+        windowController.startUpgrade()
         NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
-            object: wc.window,
+            object: windowController.window,
             queue: .main
         ) { [weak self] _ in
             self?.upgradeWindowControllers.removeValue(forKey: info.name)
@@ -310,17 +290,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        let wc = UpgradeWindowController(
+        let windowController = UpgradeWindowController(
             target: .all,
             onComplete: { [weak self] in self?.checker.checkNow() }
         )
-        upgradeAllWindowController = wc
-        wc.showWindow(nil)
+        upgradeAllWindowController = windowController
+        windowController.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
-        wc.startUpgrade()
+        windowController.startUpgrade()
         NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
-            object: wc.window,
+            object: windowController.window,
             queue: .main
         ) { [weak self] _ in
             self?.upgradeAllWindowController = nil

@@ -6,7 +6,7 @@ final class ModelsTests: XCTestCase {
     // MARK: - BrewPackage
 
     func testBrewPackageDecoding() throws {
-        let json = """
+        let jsonString = """
         {
             "name": "git",
             "installed_versions": ["2.43.0"],
@@ -14,8 +14,8 @@ final class ModelsTests: XCTestCase {
             "pinned": false,
             "pinned_version": null
         }
-        """.data(using: .utf8)!
-
+        """
+        let json = Data(jsonString.utf8)
         let pkg = try JSONDecoder().decode(BrewPackage.self, from: json)
 
         XCTAssertEqual(pkg.name, "git")
@@ -25,7 +25,7 @@ final class ModelsTests: XCTestCase {
     }
 
     func testBrewPackageMultipleInstalledVersions() throws {
-        let json = """
+        let jsonString = """
         {
             "name": "python@3.13",
             "installed_versions": ["3.13.0", "3.13.1"],
@@ -33,8 +33,8 @@ final class ModelsTests: XCTestCase {
             "pinned": false,
             "pinned_version": null
         }
-        """.data(using: .utf8)!
-
+        """
+        let json = Data(jsonString.utf8)
         let pkg = try JSONDecoder().decode(BrewPackage.self, from: json)
         XCTAssertEqual(pkg.installedVersions.count, 2)
     }
@@ -43,14 +43,14 @@ final class ModelsTests: XCTestCase {
 
     func testBrewCaskDecoding() throws {
         // Real brew output: installed_versions is an ARRAY, not a string
-        let json = """
+        let jsonString = """
         {
             "name": "chromedriver",
             "installed_versions": ["143.0.7499.192"],
             "current_version": "146.0.7680.31"
         }
-        """.data(using: .utf8)!
-
+        """
+        let json = Data(jsonString.utf8)
         let cask = try JSONDecoder().decode(BrewCask.self, from: json)
 
         XCTAssertEqual(cask.name, "chromedriver")
@@ -62,7 +62,7 @@ final class ModelsTests: XCTestCase {
     // MARK: - BrewOutdatedResponse
 
     func testFullResponseDecoding() throws {
-        let json = """
+        let jsonString = """
         {
             "formulae": [
                 {
@@ -81,8 +81,8 @@ final class ModelsTests: XCTestCase {
                 }
             ]
         }
-        """.data(using: .utf8)!
-
+        """
+        let json = Data(jsonString.utf8)
         let response = try JSONDecoder().decode(BrewOutdatedResponse.self, from: json)
 
         XCTAssertEqual(response.formulae.count, 1)
@@ -92,10 +92,7 @@ final class ModelsTests: XCTestCase {
     }
 
     func testEmptyResponse() throws {
-        let json = """
-        {"formulae": [], "casks": []}
-        """.data(using: .utf8)!
-
+        let json = Data(#"{"formulae": [], "casks": []}"#.utf8)
         let response = try JSONDecoder().decode(BrewOutdatedResponse.self, from: json)
         XCTAssertTrue(response.formulae.isEmpty)
         XCTAssertTrue(response.casks.isEmpty)

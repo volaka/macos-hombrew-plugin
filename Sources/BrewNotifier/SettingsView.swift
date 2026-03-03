@@ -50,9 +50,9 @@ struct SettingsView: View {
                         HStack {
                             Text(pkg)
                             Spacer()
-                            Button(action: { remove(pkg) }) {
+                            Button(action: { remove(pkg) }, label: {
                                 Image(systemName: "minus.circle.fill").foregroundColor(.red)
-                            }
+                            })
                             .buttonStyle(.plain)
                         }
                     }

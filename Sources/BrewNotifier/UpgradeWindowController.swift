@@ -2,7 +2,7 @@ import AppKit
 import BrewNotifierCore
 
 enum UpgradeTarget {
-    case single(name: String, from: String, to: String)
+    case single(name: String, from: String, newVersion: String)
     case all
 }
 
@@ -59,8 +59,8 @@ final class UpgradeWindowController: NSWindowController {
 
         let initialLabel: String
         switch target {
-        case .single(let name, let from, let to):
-            initialLabel = "\(name)  \(from) → \(to)"
+        case .single(let name, let from, let newVersion):
+            initialLabel = "\(name)  \(from) → \(newVersion)"
         case .all:
             initialLabel = "Running brew upgrade…"
         }
@@ -70,20 +70,7 @@ final class UpgradeWindowController: NSWindowController {
         statusLabel.alignment = .center
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let scrollView = NSScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        scrollView.hasVerticalScroller = true
-        scrollView.borderType = .bezelBorder
-
-        let textView = NSTextView()
-        textView.isEditable = false
-        textView.isSelectable = true
-        textView.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
-        textView.backgroundColor = NSColor.textBackgroundColor
-        textView.textContainerInset = NSSize(width: 4, height: 4)
-        textView.autoresizingMask = [.width]
-        scrollView.documentView = textView
-        logView = textView
+        let scrollView = makeScrollView()
 
         actionButton = NSButton(title: "Cancel", target: self, action: #selector(cancelOrClose))
         actionButton.bezelStyle = .rounded
@@ -95,24 +82,41 @@ final class UpgradeWindowController: NSWindowController {
         container.addSubview(actionButton)
         panel.contentView = container
 
+        applyConstraints(container: container, scrollView: scrollView)
+    }
+
+    private func makeScrollView() -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.hasVerticalScroller = true
+        scrollView.borderType = .bezelBorder
+        let textView = NSTextView()
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+        textView.backgroundColor = NSColor.textBackgroundColor
+        textView.textContainerInset = NSSize(width: 4, height: 4)
+        textView.autoresizingMask = [.width]
+        scrollView.documentView = textView
+        logView = textView
+        return scrollView
+    }
+
+    private func applyConstraints(container: NSView, scrollView: NSScrollView) {
         NSLayoutConstraint.activate([
             container.widthAnchor.constraint(equalToConstant: 400),
             container.heightAnchor.constraint(equalToConstant: 300),
-
             spinner.centerXAnchor.constraint(equalTo: container.centerXAnchor),
             spinner.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
-
             statusLabel.topAnchor.constraint(equalTo: spinner.bottomAnchor, constant: 8),
             statusLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
             statusLabel.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-
             scrollView.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 8),
             scrollView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 12),
             scrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
             scrollView.bottomAnchor.constraint(equalTo: actionButton.topAnchor, constant: -8),
-
             actionButton.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            actionButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12),
+            actionButton.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -12)
         ])
     }
 
@@ -120,13 +124,13 @@ final class UpgradeWindowController: NSWindowController {
         upgradeTask = Task {
             do {
                 switch target {
-                case .single(let name, _, let to):
+                case .single(let name, _, let newVersion):
                     try await service.upgradeWithProgress(package: name) { [weak self] line in
                         Task { @MainActor [weak self] in self?.appendLog(line) }
                     }
                     spinner.stopAnimation(nil)
                     spinner.isHidden = true
-                    statusLabel.stringValue = "✅ Updated to \(to)"
+                    statusLabel.stringValue = "✅ Updated to \(newVersion)"
                 case .all:
                     try await service.upgradeAllWithProgress { [weak self] line in
                         Task { @MainActor [weak self] in self?.appendLog(line) }
@@ -150,7 +154,7 @@ final class UpgradeWindowController: NSWindowController {
         guard let storage = logView.textStorage else { return }
         let attrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular),
-            .foregroundColor: NSColor.labelColor,
+            .foregroundColor: NSColor.labelColor
         ]
         storage.append(NSAttributedString(string: line + "\n", attributes: attrs))
         logView.scrollToEndOfDocument(nil)
