@@ -61,4 +61,24 @@ final class AppSettingsTests: XCTestCase {
         let settings2 = AppSettings(defaults: defaults)
         XCTAssertEqual(settings2.ignoredPackages, ["git", "curl"])
     }
+
+    func testDefaultLogRetentionDaysIsThirty() {
+        XCTAssertEqual(settings.logRetentionDays, 30)
+    }
+
+    func testLogRetentionDaysPersists() {
+        settings.logRetentionDays = 7
+        let settings2 = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings2.logRetentionDays, 7)
+    }
+
+    func testDefaultLogDirectoryPathIsNil() {
+        XCTAssertNil(settings.logDirectoryPath)
+    }
+
+    func testLogDirectoryPathPersists() {
+        settings.logDirectoryPath = "/tmp/logs"
+        let settings2 = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings2.logDirectoryPath, "/tmp/logs")
+    }
 }
