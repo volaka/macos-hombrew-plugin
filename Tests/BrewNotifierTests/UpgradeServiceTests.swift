@@ -6,7 +6,7 @@ final class UpgradeServiceTests: XCTestCase {
     func testUpgradeThrowsWhenBrewNotFound() async throws {
         let service = UpgradeService(brewPathOverride: "/nonexistent/brew")
         do {
-            try await service.upgrade(package: "git")
+            try await service.upgradeWithProgress(package: "git") { _ in }
             XCTFail("Expected brewNotFound")
         } catch UpgradeServiceError.brewNotFound {
             // pass
@@ -15,13 +15,13 @@ final class UpgradeServiceTests: XCTestCase {
 
     func testUpgradeSucceedsWithStub() async throws {
         let service = UpgradeService(stubbedExitCode: 0, stubbedStderr: "")
-        try await service.upgrade(package: "git")  // should not throw
+        try await service.upgradeWithProgress(package: "git") { _ in }  // should not throw
     }
 
     func testUpgradeFailsWithNonZeroExit() async throws {
         let service = UpgradeService(stubbedExitCode: 1, stubbedStderr: "Error: git not installed")
         do {
-            try await service.upgrade(package: "git")
+            try await service.upgradeWithProgress(package: "git") { _ in }
             XCTFail("Expected executionFailed")
         } catch UpgradeServiceError.executionFailed(let msg) {
             XCTAssertTrue(msg.contains("git not installed"))
